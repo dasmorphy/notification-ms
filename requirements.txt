@@ -1,0 +1,24 @@
+connexion==2.14.2
+connexion[swagger-ui] >= 2.6.0
+python-dateutil==2.8.2
+setuptools >= 21.0.0
+swagger-ui-bundle==0.0.9
+loguru==0.7.0
+firebase-admin==7.5.0
+Flask==2.2.5
+Flask-Cors==4.0.0
+Flask-RESTful==0.3.10
+Flask-SQLAlchemy==3.0.5
+APScheduler==3.10.4
+requests==2.31.0
+requests-file==1.5.1
+requests-toolbelt==1.0.0
+SQLAlchemy==2.0.19
+path==16.7.1
+python-dotenv==1.0.1
+gunicorn==21.2.0
+distlib==0.3.7
+httpcore==1.0.2
+pytz==2023.3
+psycopg2-binary==2.9.7
+Werkzeug==2.2.3

@@ -1,0 +1,187 @@
+openapi: 3.0.3
+info:
+  title: notifications-ms
+  description: Notifications microservice
+  version: 1.0.0
+servers:
+- url: /rest/notifications-api/v1.0/
+paths:
+  /notifications:
+    get:
+      tags:
+      - Firebase
+      summary: Obtiene todas las notificaciones por usuario
+      description: Devuelve todos las notificaciones de la base
+      operationId: get_notifications
+      parameters:
+        - name: id_user
+          in: query
+          required: true
+          schema:
+            type: string
+            example: "fcea920f7412b5da7be0cf42b8c93759"
+        - name: externalTransactionId
+          in: header
+          required: true
+          schema:
+            type: string
+            example: "fcea920f7412b5da7be0cf42b8c93759"
+        - name: channel
+          in: header
+          required: true
+          schema:
+            type: string
+            example: "ZENTINEL"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "503":
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+      x-openapi-router-controller: swagger_server.controllers.notification_controller.NotificationView
+  /send-push-notification:
+    post:
+      tags:
+      - Firebase
+      summary: Envia una notificacion push
+      description: Envia una notificacion push
+      operationId: send_push_notification
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RequestPushNotification"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "503":
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+      x-openapi-router-controller: swagger_server.controllers.notification_controller.NotificationView
+components:
+  schemas:
+    GenericResponse:
+      properties:
+        data:
+          type: object
+          nullable: true
+          example: Estructura generica.
+        errorCode:
+          type: integer
+          example: 0
+        message:
+          type: string
+          example: Mensaje generico.
+        internalTransactionId:
+          type: string
+          example: d290f1ee-6c54-4b01-90e6-d701748f0851
+        externalTransactionId:
+          type: string
+          example: fcea920f7412b5da7be0cf42b8c93759
+      example:
+        errorCode: 0
+        internalTransactionId: d290f1ee-6c54-4b01-90e6-d701748f0851
+        externalTransactionId: fcea920f7412b5da7be0cf42b8c93759
+        message: Mensaje generico.
+        data: {}
+    ResponseError:
+      type: object
+      properties:
+        errorCode:
+          type: integer
+        internalTransactionId:
+          type: string
+        externalTransactionId:
+          type: string
+        message:
+          type: string
+    RequestPushNotification:
+      properties:
+        data:
+          $ref: "#/components/schemas/PushNotificationData"
+        channel:
+          type: string
+          example: ZENTINEL
+        externalTransactionId:
+          type: string
+          example: fcea920f7412b5da7be0cf42b8c93759
+    PushNotificationData:
+      type: object
+      properties:
+        user_ids:
+          type: array
+          items:
+            type: string
+          example: ["7f9c3a1e-2b4d-4e5f-8a6b-1c2d3e4f5a6b"]
+        title:
+          type: string
+          example: "Tu pedido fue enviado"
+        body:
+          type: string
+          example: "Llega en 2 días hábiles"
+        img_url:
+          type: string
+          nullable: true
+          example: "https://cdn.example.com/img.png"
+        notification_type:
+          type: string
+          nullable: true
+          example: "order_update"
+        variables:
+          type: object
+          nullable: true
+          example: {"username": "Daniel Males"}
+        data:
+          type: object
+          nullable: true
+          example: {}
