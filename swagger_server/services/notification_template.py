@@ -13,6 +13,10 @@ class NotificationTemplate:
             "title": "Solicitud aprobada",
             "body": "$username ha aprobado tu solicitud de finalización de proyecto",
         },
+        "TECHNICAL_REQUEST_APPROVAL": {
+            "title": "Solicitud de aprobación",
+            "body": "$username ha solicitado la aprobación del proyecto $project_name",
+        },
         # agrega aquí nuevos tipos según los necesites
     }
 

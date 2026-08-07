@@ -52,7 +52,7 @@ class NotificationView(MethodView):
                 logger.info(message, internal=internal_transaction_id, external=external_transaction_id)
                 self.send_notification_use_case.execute(body.channel, body.data)
                 response["error_code"] = 0
-                response["message"] = "Notificación enviada correctamente",
+                response["message"] = "Notificación enviada correctamente"
                 
                 end_time = default_timer()
                 logger.info(f"Fin de la transacción, procesada en : {end_time - start_time} milisegundos",
@@ -85,6 +85,43 @@ class NotificationView(MethodView):
                 end_time = default_timer()
                 logger.info(f"Fin de la transacción, procesada en : {end_time - start_time} milisegundos",
                             internal=internal_transaction_id, external=external_transaction_id)
+                status_code = 200
+        except Exception as ex:
+            response, status_code = CustomAPIException.check_exception(ex, function_name, internal_process)
+            
+        return response, status_code
+
+    def save_fcm_token(self, body=None):  # noqa: E501
+        """Guarda un token FCM
+
+        Guarda un token FCM # noqa: E501
+
+        :param body: 
+        :type body: dict | bytes
+
+        :rtype: GenericResponse
+        """
+        internal_process = (None, None)
+        function_name = "save_fcm_token"
+        response = {}
+        status_code = 500
+        try:
+            if connexion.request.is_json:
+                body = connexion.request.get_json()  # noqa: E501
+                start_time = default_timer()
+                internal_transaction_id = str(generate_internal_transaction_id())
+                external_transaction_id = body.get("external_transaction_id")
+                internal_process = (internal_transaction_id, external_transaction_id)
+                response["internal_transaction_id"] = internal_transaction_id
+                response["external_transaction_id"] = external_transaction_id
+                message = f"start request: {function_name}, channel: {body.get('channel')}"
+                logger.info(message, internal=internal_transaction_id, external=external_transaction_id)
+                self.notification_use_case.save_fcm_token(body.get("data"))
+                response["error_code"] = 0
+                response["message"] = "Token FCM guardado correctamente"
+                end_time = default_timer()
+                logger.info(f"Fin de la transacción, procesada en : {end_time - start_time} milisegundos",
+                            internal=internal_transaction_id, external=body.get("external_transaction_id"))
                 status_code = 200
         except Exception as ex:
             response, status_code = CustomAPIException.check_exception(ex, function_name, internal_process)

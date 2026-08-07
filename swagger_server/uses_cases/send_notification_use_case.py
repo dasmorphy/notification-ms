@@ -1,5 +1,6 @@
 import uuid
 from firebase_admin import messaging
+from loguru import logger
 
 from swagger_server.exception.custom_error_exception import CustomAPIException
 from swagger_server.models.db.notifications import Notification
@@ -37,7 +38,6 @@ class SendNotificationUseCase:
         notification_type = payload.notification_type
         data = payload.data or {}
 
-        results = []
         for user_id in payload.user_ids or []:
             tokens = self.notification_repository.get_active_tokens_by_user(
                 user_id=user_id,
@@ -45,14 +45,15 @@ class SendNotificationUseCase:
             )
 
             if not tokens:
-                results.append({
-                    "user_id": user_id,
-                    "status": "no_active_token"
-                })
+                logger.warning(
+                    f"No se encontraron tokens activos para el usuario {user_id} en el proyecto {id_project.id_project}",
+                    internal=None,
+                    external=None
+                )
                 continue
 
             for token_row in tokens:
-                result_item = self._send_to_token(
+                self._send_to_token(
                     user_id=user_id,
                     project=project,
                     token_row=token_row,
@@ -62,9 +63,7 @@ class SendNotificationUseCase:
                     notification_type=notification_type,
                     data=data,
                 )
-                results.append(result_item)
-
-        return results
+                # results.append(result_item)
 
     def _resolve_title_and_body(self, payload: dict, notification_type: str) -> tuple[str, str]:
         """

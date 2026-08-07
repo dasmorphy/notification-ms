@@ -108,6 +108,74 @@ paths:
               schema:
                 $ref: "#/components/schemas/ResponseError"
       x-openapi-router-controller: swagger_server.controllers.notification_controller.NotificationView
+  /fcm-token-user:
+    post:
+      tags:
+      - Firebase
+      summary: Guarda el token fcm del usuario
+      description: Guarda token fcm
+      operationId: save_fcm_token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                data:
+                  type: object
+                  properties:
+                    user_id:
+                      type: string
+                      format: uuid
+                      example: "7f9c3a1e-2b4d-4e5f-8a6b-1c2d3e4f5a6b"
+                    project_id:
+                      type: integer
+                      example: 1
+                    fcm_token:
+                      type: string
+                      format: uuid
+                      example: "7f9c3a1e-2b4d-4e5f-8a6b-1c2d3e4f5a6b"
+                    platform:
+                      type: string
+                      example: "android"
+                channel:
+                  type: string
+                  example: ZENTINEL
+                externalTransactionId:
+                  type: string
+                  format: uuid
+                  example: fcea920f7412b5da7be0cf42b8c93759
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "503":
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+      x-openapi-router-controller: swagger_server.controllers.notification_controller.NotificationView
 components:
   schemas:
     GenericResponse:

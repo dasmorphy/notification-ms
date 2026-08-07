@@ -10,38 +10,6 @@ class NotificationUseCase:
         self.notification_repository = notification_repository
 
 
-
-    def execute(self, data: dict):
-        project = self.project_repo.get_active(data["id_project"])
-        if not project:
-            raise ValueError("Proyecto Firebase no encontrado o inactivo")
-
-        results = []
-        for user_id in data["user_ids"]:
-            tokens = self.fcm_token_repo.get_active_tokens(
-                user_id=user_id,
-                project_id=project.id_project
-            )
-            if not tokens:
-                results.append({"user_id": user_id, "status": "no_token"})
-                continue
-
-            for token in tokens:  # un usuario puede tener varios dispositivos
-                notification = self._build_notification(data, user_id, token.fcm_token, project.id_project)
-                self.notification_repo.save(notification)  # status='pending'
-
-                try:
-                    fcm_response = self.sender.send(project, notification)
-                    notification.mark_as_sent(fcm_response.message_id)
-                except Exception as e:
-                    self._handle_send_error(e, token)  # si es UNREGISTERED -> token.is_active = False
-                    notification.mark_as_failed(str(e))
-
-                self.notification_repo.update(notification)
-                results.append({"user_id": user_id, "status": notification.status})
-
-        return results
-
     def get_notifications(self, args, internal, external):
         id_user = args.get('id_user')
 
@@ -50,3 +18,23 @@ class NotificationUseCase:
         }
 
         return self.notification_repository.get_notifications(filters, internal, external)
+
+    def save_fcm_token(self, body):
+        """
+        Guarda un token FCM para un usuario y proyecto específico.
+        """
+        user_id = body.get("user_id")
+        project_id = body.get("project_id")
+        fcm_token = body.get("fcm_token")
+
+        if not user_id or not project_id or not fcm_token:
+            raise ValueError("Faltan campos requeridos: user_id, project_id o fcm_token")
+
+        # Verificar si el token ya existe para el usuario y proyecto
+        existing_token = self.notification_repository.get_active_tokens_by_user(user_id, project_id)
+        if existing_token:
+            # Actualizar el token existente
+            self.notification_repository.update_fcm_token(existing_token[0].id_fcm_token, fcm_token)
+        else:
+            # Crear un nuevo registro de token
+            self.notification_repository.save_fcm_token(user_id, project_id, fcm_token)

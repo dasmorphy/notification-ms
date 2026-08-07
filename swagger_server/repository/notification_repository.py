@@ -108,3 +108,46 @@ class NotificationRepository:
                     raise exception
                 
                 raise CustomAPIException("Error al obtener en la base de datos", 500)
+
+    def save_fcm_token(self, user_id: str, project_id: int, fcm_token: str) -> FcmTokenUser:
+        with self.db.session_factory() as session:
+            # Desactivar tokens existentes para el mismo usuario y proyecto
+            session.query(FcmTokenUser).filter(
+                FcmTokenUser.user_id == user_id,
+                FcmTokenUser.project_id == project_id,
+                FcmTokenUser.is_active.is_(True)
+            ).update({"is_active": False})
+
+            # Crear un nuevo token
+            new_token = FcmTokenUser(
+                user_id=user_id,
+                project_id=project_id,
+                fcm_token=fcm_token,
+                is_active=True
+            )
+            session.add(new_token)
+            session.commit()
+            session.refresh(new_token)
+
+        return new_token
+
+    def get_active_tokens_by_user(self, user_id: str, project_id: int) -> list[FcmTokenUser]:
+        with self.db.session_factory() as session:
+            return (
+                session.query(FcmTokenUser)
+                .filter(
+                    FcmTokenUser.user_id == user_id,
+                    FcmTokenUser.project_id == project_id,
+                    FcmTokenUser.is_active.is_(True)
+                )
+                .all()
+            )
+
+    def update_fcm_token(self, id_fcm_token: int, new_fcm_token: str) -> FcmTokenUser:
+        with self.db.session_factory() as session:
+            token = session.query(FcmTokenUser).get(id_fcm_token)
+            if token:
+                token.fcm_token = new_fcm_token
+                session.commit()
+                session.refresh(token)
+            return token
