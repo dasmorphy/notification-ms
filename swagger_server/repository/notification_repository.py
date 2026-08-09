@@ -111,7 +111,12 @@ class NotificationRepository:
                 
                 raise CustomAPIException("Error al obtener en la base de datos", 500)
 
-    def save_fcm_token(self, user_id: str, project_id: int, fcm_token: str) -> FcmTokenUser:
+    def save_fcm_token(self, body: dict) -> FcmTokenUser:
+        user_id = body.get("user_id")
+        project_id = body.get("project_id")
+        fcm_token = body.get("fcm_token")
+        platform = body.get("platform")
+
         with self.db.session_factory() as session:
             # Desactivar tokens existentes para el mismo usuario y proyecto
             session.query(FcmTokenUser).filter(
@@ -125,6 +130,7 @@ class NotificationRepository:
                 user_id=user_id,
                 project_id=project_id,
                 fcm_token=fcm_token,
+                platform=platform,
                 is_active=True
             )
             session.add(new_token)
@@ -145,11 +151,12 @@ class NotificationRepository:
                 .all()
             )
 
-    def update_fcm_token(self, id_fcm_token: int, new_fcm_token: str) -> FcmTokenUser:
+    def update_fcm_token(self, id_fcm_token: int, body: dict) -> FcmTokenUser:
         with self.db.session_factory() as session:
             token = session.query(FcmTokenUser).get(id_fcm_token)
             if token:
-                token.fcm_token = new_fcm_token
+                token.fcm_token = body.get("fcm_token")
+                token.platform = body.get("platform")
                 token.updated_at = datetime.now()
                 session.commit()
                 session.refresh(token)

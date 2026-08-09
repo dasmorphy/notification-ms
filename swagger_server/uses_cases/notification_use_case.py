@@ -26,15 +26,16 @@ class NotificationUseCase:
         user_id = body.get("user_id")
         project_id = body.get("project_id")
         fcm_token = body.get("fcm_token")
+        platform = body.get("platform")
 
-        if not user_id or not project_id or not fcm_token:
-            raise ValueError("Faltan campos requeridos: user_id, project_id o fcm_token")
+        if not user_id or not project_id or not fcm_token or not platform:
+            raise ValueError("Faltan campos requeridos: user_id, project_id, fcm_token o platform")
 
         # Verificar si el token ya existe para el usuario y proyecto
         existing_token = self.notification_repository.get_active_tokens_by_user(user_id, project_id)
         if existing_token:
             # Actualizar el token existente
-            self.notification_repository.update_fcm_token(existing_token[0].id_fcm_token, fcm_token)
+            self.notification_repository.update_fcm_token(existing_token[0].id_fcm_token, body)
         else:
             # Crear un nuevo registro de token
-            self.notification_repository.save_fcm_token(user_id, project_id, fcm_token)
+            self.notification_repository.save_fcm_token(body)
