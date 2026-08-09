@@ -27,8 +27,8 @@ class FCMNotificationSender:
 
     def _get_app(self, project: FirebaseProjects) -> firebase_admin.App:
         if project.id_project not in _firebase_apps:
-            cred = credentials.Certificate(self._resolve_path("zentinel_fcm.json"))
-            # cred = credentials.Certificate(project.service_account_path)
+            # cred = credentials.Certificate(self._resolve_path("zentinel_fcm.json"))
+            cred = credentials.Certificate(project.service_account_path)
 
             app = firebase_admin.initialize_app(cred, name=f"project-{project.id_project}")
             _firebase_apps[project.id_project] = app
