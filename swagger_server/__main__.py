@@ -16,7 +16,7 @@ from swagger_server.utils.log import configure_logger
 
 # VARIABLES (CAMBIAR DE PENDIENDO DE CADA MS)
 MS_NAME: str = 'notification-ms'
-MS_PORT: int = 2126
+MS_PORT: int = 2121
 ORIGINS = [] #Origins permitidos en prod
 # ------------------------------------------------------------------------
 log()
