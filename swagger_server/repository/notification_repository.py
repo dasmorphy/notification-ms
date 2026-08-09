@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from loguru import logger
 from sqlalchemy import select
 
@@ -148,6 +150,7 @@ class NotificationRepository:
             token = session.query(FcmTokenUser).get(id_fcm_token)
             if token:
                 token.fcm_token = new_fcm_token
+                token.updated_at = datetime.now()
                 session.commit()
                 session.refresh(token)
             return token
