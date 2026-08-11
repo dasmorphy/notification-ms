@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS public.notifications
     notification_type text COLLATE pg_catalog."default",
     data jsonb DEFAULT '{}'::jsonb,
     status text DEFAULT 'pending',
-    error text;
+    error text,
     is_read boolean NOT NULL DEFAULT false,
     is_deleted boolean NOT NULL DEFAULT false,
     sent_at timestamp without time zone DEFAULT now(),

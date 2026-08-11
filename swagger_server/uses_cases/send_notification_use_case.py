@@ -36,7 +36,10 @@ class SendNotificationUseCase:
 
         img_url = payload.img_url
         notification_type = payload.notification_type
-        data = payload.data or {}
+        data = {
+            **(payload.data or {}),
+            "notification_type": notification_type,
+        }
 
         for user_id in payload.user_ids or []:
             tokens = self.notification_repository.get_active_tokens_by_user(
