@@ -101,6 +101,12 @@ class SendNotificationUseCase:
         )
         self.notification_repository.save_notification(notification)
 
+        logger.info(
+            "Enviando FCM user={} platform={} token={}",
+            user_id,
+            token_row.fcm_token
+        )
+
         # 2. Enviar vía FCM
         send_result = self.sender.send(
             project=project,

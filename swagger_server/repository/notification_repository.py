@@ -43,17 +43,6 @@ class NotificationRepository:
                 .first()
         )
 
-    def get_active_tokens_by_user(self, user_id: str, project_id: int) -> list[FcmTokenUser]:
-        with self.db.session_factory() as session:
-            return (
-                session.query(FcmTokenUser)
-            .filter(
-                FcmTokenUser.user_id == user_id,
-                FcmTokenUser.project_id == project_id,
-                FcmTokenUser.is_active.is_(True)
-            )
-            .all()
-        )
 
     def deactivate_token(self, id_fcm_token: int) -> None:
         with self.db.session_factory() as session:
@@ -119,11 +108,11 @@ class NotificationRepository:
 
         with self.db.session_factory() as session:
             # Desactivar tokens existentes para el mismo usuario y proyecto
-            session.query(FcmTokenUser).filter(
-                FcmTokenUser.user_id == user_id,
-                FcmTokenUser.project_id == project_id,
-                FcmTokenUser.is_active.is_(True)
-            ).update({"is_active": False})
+            # session.query(FcmTokenUser).filter(
+            #     FcmTokenUser.user_id == user_id,
+            #     FcmTokenUser.project_id == project_id,
+            #     FcmTokenUser.is_active.is_(True)
+            # ).update({"is_active": False})
 
             # Crear un nuevo token
             new_token = FcmTokenUser(
