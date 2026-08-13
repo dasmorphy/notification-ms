@@ -58,7 +58,7 @@ class SendNotificationUseCase:
             notification = Notification(
                 id_notification=str(uuid.uuid4()),
                 user_id=user_id,
-                fcm_token=token_row.fcm_token,
+                # fcm_token=token_row.fcm_token,
                 title=title,
                 body=body,
                 img_url=img_url,
@@ -74,14 +74,6 @@ class SendNotificationUseCase:
 
             # Enviar la MISMA notificación a todos los dispositivos
             for token_row in tokens:
-
-                logger.info(
-                    "Enviando FCM user={} platform={} token={}",
-                    user_id,
-                    token_row.platform,
-                    token_row.fcm_token
-                )
-
                 send_result = self.sender.send(
                     project=project,
                     token=token_row.fcm_token,
