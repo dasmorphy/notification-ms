@@ -104,6 +104,7 @@ class SendNotificationUseCase:
         logger.info(
             "Enviando FCM user={} platform={} token={}",
             user_id,
+            token_row.platform,
             token_row.fcm_token
         )
 
