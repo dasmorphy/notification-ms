@@ -55,18 +55,70 @@ class SendNotificationUseCase:
                 )
                 continue
 
+            notification = Notification(
+                id_notification=str(uuid.uuid4()),
+                user_id=user_id,
+                fcm_token=token_row.fcm_token,
+                title=title,
+                body=body,
+                img_url=img_url,
+                notification_type=notification_type,
+                data=data,
+                status="pending",
+            )
+
+            self.notification_repository.save_notification(notification)
+
+            success_count = 0
+            errors = []
+
+            # Enviar la MISMA notificación a todos los dispositivos
             for token_row in tokens:
-                self._send_to_token(
-                    user_id=user_id,
+
+                logger.info(
+                    "Enviando FCM user={} platform={} token={}",
+                    user_id,
+                    token_row.platform,
+                    token_row.fcm_token
+                )
+
+                send_result = self.sender.send(
                     project=project,
-                    token_row=token_row,
+                    token=token_row.fcm_token,
                     title=title,
                     body=body,
                     img_url=img_url,
-                    notification_type=notification_type,
-                    data=data,
+                    data={
+                        **data,
+                        "id_notification": notification.id_notification
+                    },
                 )
-                # results.append(result_item)
+
+                if send_result.success:
+                    success_count += 1
+
+                else:
+                    errors.append(str(send_result.error))
+
+                    if isinstance(
+                        send_result.error,
+                        (
+                            messaging.UnregisteredError,
+                            messaging.SenderIdMismatchError
+                        )
+                    ):
+                        self.notification_repository.deactivate_token(
+                            token_row.id_fcm_token
+                        )
+
+                if success_count > 0:
+                    notification.status = "sent"
+                else:
+                    notification.status = "failed"
+                    notification.error = "; ".join(errors)
+
+                self.notification_repository.update_notification(notification)
+
 
     def _resolve_title_and_body(self, payload: dict, notification_type: str) -> tuple[str, str]:
         """
@@ -85,57 +137,3 @@ class SendNotificationUseCase:
                 f"para notification_type='{notification_type}'"
             )
         return title, payload.body
-
-    def _send_to_token(self, user_id, project, token_row, title, body, img_url, notification_type, data) -> dict:
-        # 1. Registrar como 'pending' antes de enviar
-        notification = Notification(
-            id_notification=str(uuid.uuid4()),
-            user_id=user_id,
-            fcm_token=token_row.fcm_token,
-            title=title,
-            body=body,
-            img_url=img_url,
-            notification_type=notification_type,
-            data=data,
-            status="pending",
-        )
-        self.notification_repository.save_notification(notification)
-
-        logger.info(
-            "Enviando FCM user={} platform={} token={}",
-            user_id,
-            token_row.platform,
-            token_row.fcm_token
-        )
-
-        # 2. Enviar vía FCM
-        send_result = self.sender.send(
-            project=project,
-            token=token_row.fcm_token,
-            title=title,
-            body=body,
-            img_url=img_url,
-            data=data,
-        )
-
-        # 3. Actualizar resultado
-        if send_result.success:
-            notification.fcm_message_id = send_result.message_id
-            notification.status = "sent"
-        else:
-            notification.status = "failed"
-            notification.error = str(send_result.error)
-
-            # Token muerto -> desactivar para no volver a intentar
-            if isinstance(send_result.error, (messaging.UnregisteredError, messaging.SenderIdMismatchError)):
-                self.notification_repository.deactivate_token(token_row.id_fcm_token)
-
-        self.notification_repository.update_notification(notification)
-
-        return {
-            "user_id": user_id,
-            "id_notification": notification.id_notification,
-            "status": notification.status,
-            "fcm_message_id": notification.fcm_message_id,
-            "error": notification.error,
-        }
