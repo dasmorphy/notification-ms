@@ -2,6 +2,7 @@ import json
 import pika
 
 from swagger_server.config.access import access
+from swagger_server.models.push_notification_data import PushNotificationData
 from swagger_server.repository.notification_repository import NotificationRepository
 from swagger_server.uses_cases.send_notification_use_case import SendNotificationUseCase
 from loguru import logger
@@ -108,7 +109,8 @@ class NotificationConsumer:
             )
 
     def send_notification(self, payload):
-        self.send_notification_use_case.execute(payload.get("channel"), payload.get("data"))
+        notification_request = PushNotificationData.from_dict(payload.get("data"))
+        self.send_notification_use_case.execute(payload.get("channel"), notification_request)
 
 
     def process_inactivate_fcm(self, channel, method, properties, body):
