@@ -9,8 +9,6 @@ from swagger_server.uses_cases.send_notification_use_case import SendNotificatio
 class NotificationConsumer:
 
     EXCHANGE = "zentinel.events"
-    QUEUE = "notification.queue"
-    ROUTING_KEY = "technical.callbacks.notification"
 
     def __init__(self):
         credentials = access()["RABBITMQ"]
@@ -43,23 +41,41 @@ class NotificationConsumer:
         )
 
         channel.queue_declare(
-            queue=self.QUEUE,
+            queue="notification.technical.queue",
             durable=True
         )
 
         channel.queue_bind(
             exchange=self.EXCHANGE,
-            queue=self.QUEUE,
-            routing_key=self.ROUTING_KEY
+            queue="notification.technical.queue",
+            routing_key="technical.callbacks.notification"
         )
+
+        channel.queue_declare(
+            queue="notification.fcm-inactivate.queue",
+            durable=True
+        )
+
+        channel.queue_bind(
+            exchange=self.EXCHANGE,
+            queue="notification.fcm-inactivate.queue",
+            routing_key="logbook.inactivate.fcm"
+        )
+
 
         channel.basic_qos(
             prefetch_count=1
         )
 
         channel.basic_consume(
-            queue=self.QUEUE,
+            queue="notification.technical.queue",
             on_message_callback=self.process_message,
+            auto_ack=False
+        )
+
+        channel.basic_consume(
+            queue="notification.fcm-inactivate.queue",
+            on_message_callback=self.process_inactivate_fcm,
             auto_ack=False
         )
 
@@ -67,16 +83,8 @@ class NotificationConsumer:
 
         channel.start_consuming()
 
-    def process_message(
-        self,
-        channel,
-        method,
-        properties,
-        body
-    ):
-
+    def process_message(self, channel, method, properties, body):
         try:
-
             payload = json.loads(body)
 
             print("Evento recibido:")
@@ -99,3 +107,22 @@ class NotificationConsumer:
 
     def send_notification(self, payload):
         self.send_notification_use_case.execute(payload.get("channel"), payload.get("data"))
+
+
+    def process_inactivate_fcm(self, channel, method, properties, body):
+        try:
+            payload = json.loads(body)
+
+            # self.inactivate_fcm_use_case.execute(
+            #     payload
+            # )
+
+            channel.basic_ack(
+                delivery_tag=method.delivery_tag
+            )
+
+        except Exception as error:
+            channel.basic_nack(
+                delivery_tag=method.delivery_tag,
+                requeue=False
+            )
