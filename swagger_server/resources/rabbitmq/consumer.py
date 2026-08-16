@@ -4,6 +4,7 @@ import pika
 from swagger_server.config.access import access
 from swagger_server.repository.notification_repository import NotificationRepository
 from swagger_server.uses_cases.send_notification_use_case import SendNotificationUseCase
+from loguru import logger
 
 
 class NotificationConsumer:
@@ -97,8 +98,9 @@ class NotificationConsumer:
             )
 
         except Exception as error:
-
+            external = payload.get("externalTransactionId")
             print(f"Error procesando evento: {error}")
+            logger.error("Error procesando cola notificación: {}", str(error), internal=external, external=external)
 
             channel.basic_nack(
                 delivery_tag=method.delivery_tag,
