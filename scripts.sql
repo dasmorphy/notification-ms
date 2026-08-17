@@ -139,3 +139,18 @@ ALTER SEQUENCE public.firebase_projects_id_seq
 
 ALTER TABLE IF EXISTS public.firebase_projects
     ALTER COLUMN id_project SET DEFAULT nextval('firebase_projects_id_seq'::regclass);
+
+
+----------------------------------------------------------------------------------------------------------
+
+ALTER TABLE IF EXISTS public.fcm_token_users DROP COLUMN IF EXISTS token_session;
+
+ALTER TABLE IF EXISTS public.fcm_token_users
+    ADD COLUMN session_id integer;
+ALTER TABLE IF EXISTS public.fcm_token_users
+    ADD CONSTRAINT fcm_token_session_id FOREIGN KEY (session_id)
+    REFERENCES public.user_sessions (id_session) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+CREATE INDEX IF NOT EXISTS fki_fcm_token_session_id
+    ON public.fcm_token_users(session_id);

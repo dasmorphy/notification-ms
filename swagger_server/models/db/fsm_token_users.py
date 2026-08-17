@@ -36,6 +36,12 @@ class FcmTokenUser(Base):
         nullable=False
     )
 
+    session_id = Column(
+        Integer,
+        ForeignKey('public.user_sessions.id_session'),
+        nullable=False
+    )
+
     fcm_token = Column(Text, nullable=False)
     platform = Column(Text, nullable=False)
     is_active = Column(Boolean, default=True)

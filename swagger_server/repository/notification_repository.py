@@ -120,6 +120,7 @@ class NotificationRepository:
                 project_id=project_id,
                 fcm_token=fcm_token,
                 platform=platform,
+                session_id=body.get("session_id"),
                 is_active=True
             )
             session.add(new_token)
@@ -128,13 +129,14 @@ class NotificationRepository:
 
         return new_token
 
-    def get_active_tokens_by_user(self, user_id: str, project_id: int) -> list[FcmTokenUser]:
+    def get_active_tokens_by_user(self, user_id: str, project_id: int, session_id: int) -> list[FcmTokenUser]:
         with self.db.session_factory() as session:
             return (
                 session.query(FcmTokenUser)
                 .filter(
                     FcmTokenUser.user_id == user_id,
                     FcmTokenUser.project_id == project_id,
+                    FcmTokenUser.session_id == session_id,
                     FcmTokenUser.is_active.is_(True)
                 )
                 .all()

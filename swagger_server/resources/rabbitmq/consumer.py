@@ -2,8 +2,10 @@ import json
 import pika
 
 from swagger_server.config.access import access
+from swagger_server.models.db.user_sessions import UserSessions
 from swagger_server.models.push_notification_data import PushNotificationData
 from swagger_server.repository.notification_repository import NotificationRepository
+from swagger_server.uses_cases.notification_use_case import NotificationUseCase
 from swagger_server.uses_cases.send_notification_use_case import SendNotificationUseCase
 from loguru import logger
 
@@ -15,7 +17,7 @@ class NotificationConsumer:
     def __init__(self):
         credentials = access()["RABBITMQ"]
         self.send_notification_use_case = SendNotificationUseCase(NotificationRepository())
-
+        self.notification_use_case = NotificationUseCase(NotificationRepository())
 
         self.connection_params = pika.ConnectionParameters(
             host=credentials["HOST"],
@@ -64,6 +66,17 @@ class NotificationConsumer:
             routing_key="logbook.inactivate.fcm"
         )
 
+        channel.queue_declare(
+            queue="notification.save-fcm-token.queue",
+            durable=True
+        )
+
+        channel.queue_bind(
+            exchange=self.EXCHANGE,
+            queue="notification.save-fcm-token.queue",
+            routing_key="zentinel.save.fcm_token"
+        )
+
 
         channel.basic_qos(
             prefetch_count=1
@@ -78,6 +91,12 @@ class NotificationConsumer:
         channel.basic_consume(
             queue="notification.fcm-inactivate.queue",
             on_message_callback=self.process_inactivate_fcm,
+            auto_ack=False
+        )
+
+        channel.basic_consume(
+            queue="notification.save-fcm-token.queue",
+            on_message_callback=self.save_fcm_token_queue,
             auto_ack=False
         )
 
@@ -126,6 +145,29 @@ class NotificationConsumer:
             )
 
         except Exception as error:
+            channel.basic_nack(
+                delivery_tag=method.delivery_tag,
+                requeue=False
+            )
+
+    def save_fcm_token_queue(self, channel, method, properties, body):
+        try:
+            payload = json.loads(body)
+
+            print("Evento recibido:")
+            print(payload)
+            
+            self.notification_use_case.save_fcm_token(payload)
+
+            channel.basic_ack(
+                delivery_tag=method.delivery_tag
+            )
+
+        except Exception as error:
+            external = payload.get("externalTransactionId")
+            print(f"Error procesando evento: {error}")
+            logger.error("Error procesando cola notificación: {}", str(error), internal=external, external=external)
+
             channel.basic_nack(
                 delivery_tag=method.delivery_tag,
                 requeue=False
