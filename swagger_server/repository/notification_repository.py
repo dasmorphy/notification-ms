@@ -9,6 +9,7 @@ from swagger_server.models.db.fsm_token_users import FcmTokenUser
 from swagger_server.models.db.notifications import Notification
 from swagger_server.models.db.users import Users
 from swagger_server.resources.databases.postgresql import PostgreSQLClient
+from swagger_server.models.db.user_sessions import UserSessions
 
 
 class NotificationRepository:
