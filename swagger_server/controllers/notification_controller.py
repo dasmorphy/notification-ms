@@ -91,6 +91,98 @@ class NotificationView(MethodView):
             
         return response, status_code
 
+    def update_read_status(self, id_notification, body=None):
+        internal_process = (None, None)
+        function_name = "update_read_status"
+        response = {}
+        status_code = 500
+        try:
+            start_time = default_timer()
+            internal_transaction_id = str(generate_internal_transaction_id())
+            external_transaction_id = request.headers.get('externalTransactionId')
+            internal_process = (internal_transaction_id, external_transaction_id)
+            response["internal_transaction_id"] = internal_transaction_id
+            response["external_transaction_id"] = external_transaction_id
+            message = f"start request: {function_name}, channel: {request.headers.get('channel')}"
+            logger.info(message, internal=internal_transaction_id, external=external_transaction_id)
+
+            body = connexion.request.get_json() if connexion.request.is_json else None
+            result = self.notification_use_case.update_read_status(
+                id_notification, body, internal_transaction_id, external_transaction_id
+            )
+            response["error_code"] = 0
+            response["message"] = "Estado de lectura actualizado correctamente"
+            response["data"] = result
+            end_time = default_timer()
+            logger.info(f"Fin de la transacción, procesada en : {end_time - start_time} milisegundos",
+                        internal=internal_transaction_id, external=external_transaction_id)
+            status_code = 200
+        except Exception as ex:
+            response, status_code = CustomAPIException.check_exception(ex, function_name, internal_process)
+
+        return response, status_code
+
+    def mark_all_as_read(self, body=None):
+        internal_process = (None, None)
+        function_name = "mark_all_as_read"
+        response = {}
+        status_code = 500
+        try:
+            start_time = default_timer()
+            internal_transaction_id = str(generate_internal_transaction_id())
+            external_transaction_id = request.headers.get('externalTransactionId')
+            internal_process = (internal_transaction_id, external_transaction_id)
+            response["internal_transaction_id"] = internal_transaction_id
+            response["external_transaction_id"] = external_transaction_id
+            message = f"start request: {function_name}, channel: {request.headers.get('channel')}"
+            logger.info(message, internal=internal_transaction_id, external=external_transaction_id)
+
+            body = connexion.request.get_json() if connexion.request.is_json else None
+            result = self.notification_use_case.mark_all_as_read(
+                body, internal_transaction_id, external_transaction_id
+            )
+            response["error_code"] = 0
+            response["message"] = "Notificaciones marcadas como leídas correctamente"
+            response["data"] = result
+            end_time = default_timer()
+            logger.info(f"Fin de la transacción, procesada en : {end_time - start_time} milisegundos",
+                        internal=internal_transaction_id, external=external_transaction_id)
+            status_code = 200
+        except Exception as ex:
+            response, status_code = CustomAPIException.check_exception(ex, function_name, internal_process)
+
+        return response, status_code
+
+    def delete_notification(self, id_notification):
+        internal_process = (None, None)
+        function_name = "delete_notification"
+        response = {}
+        status_code = 500
+        try:
+            start_time = default_timer()
+            internal_transaction_id = str(generate_internal_transaction_id())
+            external_transaction_id = request.headers.get('externalTransactionId')
+            internal_process = (internal_transaction_id, external_transaction_id)
+            response["internal_transaction_id"] = internal_transaction_id
+            response["external_transaction_id"] = external_transaction_id
+            message = f"start request: {function_name}, channel: {request.headers.get('channel')}"
+            logger.info(message, internal=internal_transaction_id, external=external_transaction_id)
+
+            result = self.notification_use_case.delete_notification(
+                id_notification, internal_transaction_id, external_transaction_id
+            )
+            response["error_code"] = 0
+            response["message"] = "Notificación eliminada correctamente"
+            response["data"] = result
+            end_time = default_timer()
+            logger.info(f"Fin de la transacción, procesada en : {end_time - start_time} milisegundos",
+                        internal=internal_transaction_id, external=external_transaction_id)
+            status_code = 200
+        except Exception as ex:
+            response, status_code = CustomAPIException.check_exception(ex, function_name, internal_process)
+
+        return response, status_code
+
     def save_fcm_token(self, body=None):  # noqa: E501
         """Guarda un token FCM
 

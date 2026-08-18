@@ -1,7 +1,10 @@
 
 
 
+from uuid import UUID
+
 from swagger_server.repository.notification_repository import NotificationRepository
+from swagger_server.exception.custom_error_exception import CustomAPIException
 
 
 class NotificationUseCase:
@@ -18,6 +21,49 @@ class NotificationUseCase:
         }
 
         return self.notification_repository.get_notifications(filters, internal, external)
+
+    def update_read_status(self, id_notification, body, internal, external):
+        if not isinstance(body, dict) or "is_read" not in body:
+            raise CustomAPIException("El campo is_read es requerido", 400)
+
+        is_read = body["is_read"]
+        if not isinstance(is_read, bool):
+            raise CustomAPIException("El campo is_read debe ser booleano", 400)
+
+        notification = self.notification_repository.update_read_status(
+            id_notification, is_read, internal, external
+        )
+        if notification is None:
+            raise CustomAPIException("Notificación no encontrada", 404)
+
+        return notification
+
+    def mark_all_as_read(self, body, internal, external):
+        if not isinstance(body, dict) or not body.get("user_id"):
+            raise CustomAPIException("El campo user_id es requerido", 400)
+
+        try:
+            user_id = UUID(str(body["user_id"]))
+        except (ValueError, TypeError, AttributeError):
+            raise CustomAPIException("El campo user_id debe ser un UUID válido", 400)
+
+        updated_count = self.notification_repository.mark_all_as_read(
+            user_id, internal, external
+        )
+
+        return {
+            "user_id": str(user_id),
+            "updated_count": updated_count,
+        }
+
+    def delete_notification(self, id_notification, internal, external):
+        notification = self.notification_repository.delete_notification(
+            id_notification, internal, external
+        )
+        if notification is None:
+            raise CustomAPIException("Notificación no encontrada", 404)
+
+        return notification
 
     def save_fcm_token(self, body):
         """

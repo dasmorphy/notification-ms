@@ -19,7 +19,7 @@ class Notification(Base):
     __table_args__ = {'schema': 'public'}
 
     id_notification = Column(
-        String,
+        UUID(as_uuid=False),
         primary_key=True,
         server_default=func.gen_random_uuid()
     )

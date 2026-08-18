@@ -64,6 +64,172 @@ paths:
               schema:
                 $ref: "#/components/schemas/ResponseError"
       x-openapi-router-controller: swagger_server.controllers.notification_controller.NotificationView
+  /notifications/read-all:
+    patch:
+      tags:
+      - Firebase
+      summary: Marca todas las notificaciones de un usuario como leídas
+      description: Actualiza is_read a true para todas las notificaciones no eliminadas del usuario
+      operationId: mark_all_as_read
+      parameters:
+        - name: externalTransactionId
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: channel
+          in: header
+          required: true
+          schema:
+            type: string
+            example: "ZENTINEL"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_id
+              properties:
+                user_id:
+                  type: string
+                  format: uuid
+                  example: "7f9c3a1e-2b4d-4e5f-8a6b-1c2d3e4f5a6b"
+      responses:
+        "200":
+          description: Notificaciones marcadas como leídas correctamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+      x-openapi-router-controller: swagger_server.controllers.notification_controller.NotificationView
+  /notifications/{id_notification}/read:
+    patch:
+      tags:
+      - Firebase
+      summary: Actualiza el estado de lectura de una notificación
+      description: Marca una notificación como leída o no leída
+      operationId: update_read_status
+      parameters:
+        - name: id_notification
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: externalTransactionId
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: channel
+          in: header
+          required: true
+          schema:
+            type: string
+            example: "ZENTINEL"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - is_read
+              properties:
+                is_read:
+                  type: boolean
+                  example: true
+      responses:
+        "200":
+          description: Estado de lectura actualizado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "404":
+          description: Notificación no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+      x-openapi-router-controller: swagger_server.controllers.notification_controller.NotificationView
+  /notifications/{id_notification}/delete:
+    patch:
+      tags:
+      - Firebase
+      summary: Elimina lógicamente una notificación
+      description: Actualiza is_deleted a true para la notificación indicada
+      operationId: delete_notification
+      parameters:
+        - name: id_notification
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: externalTransactionId
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: channel
+          in: header
+          required: true
+          schema:
+            type: string
+            example: "ZENTINEL"
+      responses:
+        "200":
+          description: Notificación eliminada correctamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "404":
+          description: Notificación no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+      x-openapi-router-controller: swagger_server.controllers.notification_controller.NotificationView
   /send-push-notification:
     post:
       tags:

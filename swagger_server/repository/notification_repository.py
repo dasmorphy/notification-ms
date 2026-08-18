@@ -1,9 +1,8 @@
 from datetime import datetime
 
 from loguru import logger
-from sqlalchemy import select
+from sqlalchemy import select, update
 
-from swagger_server.exception.custom_error_exception import CustomAPIException
 from swagger_server.exception.custom_error_exception import CustomAPIException
 from swagger_server.models.db.firebase_projects import FirebaseProjects
 from swagger_server.models.db.fsm_token_users import FcmTokenUser
@@ -68,7 +67,10 @@ class NotificationRepository:
         with self.db.session_factory() as session:
             try:
                 result = session.execute(
-                    select(Notification).where(Notification.user_id == filters["id_user"])
+                    select(Notification).where(
+                        Notification.user_id == filters["id_user"],
+                        Notification.is_deleted.is_(False)
+                    )
                     .order_by(Notification.created_at.desc())
                 )
 
@@ -99,6 +101,82 @@ class NotificationRepository:
                     raise exception
                 
                 raise CustomAPIException("Error al obtener en la base de datos", 500)
+
+    def update_read_status(self, id_notification, is_read, internal, external):
+        with self.db.session_factory() as session:
+            try:
+                notification = session.get(Notification, id_notification)
+                if notification is None:
+                    return None
+
+                notification.is_read = is_read
+                notification.read_at = datetime.now() if is_read else None
+                notification.updated_at = datetime.now()
+                session.commit()
+
+                return {
+                    "id_notification": notification.id_notification,
+                    "is_read": notification.is_read,
+                    "read_at": notification.read_at.isoformat() if notification.read_at else None,
+                }
+            except Exception as exception:
+                session.rollback()
+                logger.error('Error: {}', str(exception), internal=internal, external=external)
+                if isinstance(exception, CustomAPIException):
+                    raise exception
+
+                raise CustomAPIException("Error al actualizar la notificación", 500)
+
+    def mark_all_as_read(self, user_id, internal, external):
+        with self.db.session_factory() as session:
+            try:
+                current_time = datetime.now()
+                result = session.execute(
+                    update(Notification)
+                    .where(
+                        Notification.user_id == user_id,
+                        Notification.is_deleted.is_(False),
+                        Notification.is_read.is_(False)
+                    )
+                    .values(
+                        is_read=True,
+                        read_at=current_time,
+                        updated_at=current_time
+                    )
+                )
+                session.commit()
+
+                return result.rowcount
+            except Exception as exception:
+                session.rollback()
+                logger.error('Error: {}', str(exception), internal=internal, external=external)
+                if isinstance(exception, CustomAPIException):
+                    raise exception
+
+                raise CustomAPIException("Error al actualizar las notificaciones", 500)
+
+    def delete_notification(self, id_notification, internal, external):
+        with self.db.session_factory() as session:
+            try:
+                notification = session.get(Notification, id_notification)
+                if notification is None:
+                    return None
+
+                notification.is_deleted = True
+                notification.updated_at = datetime.now()
+                session.commit()
+
+                return {
+                    "id_notification": notification.id_notification,
+                    "is_deleted": notification.is_deleted,
+                }
+            except Exception as exception:
+                session.rollback()
+                logger.error('Error: {}', str(exception), internal=internal, external=external)
+                if isinstance(exception, CustomAPIException):
+                    raise exception
+
+                raise CustomAPIException("Error al eliminar la notificación", 500)
 
     def save_fcm_token(self, body: dict) -> FcmTokenUser:
         user_id = body.get("user_id")
