@@ -208,18 +208,20 @@ class NotificationRepository:
 
         return new_token
 
-    def get_active_tokens_by_user(self, user_id: str, project_id: int, session_id: int) -> list[FcmTokenUser]:
+    def get_active_tokens_by_user(self, user_id: str, project_id: int, session_id: int | None = None) -> list[FcmTokenUser]:
         with self.db.session_factory() as session:
-            return (
-                session.query(FcmTokenUser)
-                .filter(
-                    FcmTokenUser.user_id == user_id,
-                    FcmTokenUser.project_id == project_id,
-                    FcmTokenUser.session_id == session_id,
-                    FcmTokenUser.is_active.is_(True)
-                )
-                .all()
+            query = session.query(FcmTokenUser).filter(
+                FcmTokenUser.user_id == user_id,
+                FcmTokenUser.project_id == project_id,
+                FcmTokenUser.is_active.is_(True)
             )
+
+            if session_id is not None:
+                query = query.filter(
+                    FcmTokenUser.session_id == session_id
+                )
+
+            return query.all()
 
     def update_fcm_token(self, id_fcm_token: int, body: dict) -> FcmTokenUser:
         with self.db.session_factory() as session:
